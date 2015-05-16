@@ -1,0 +1,3 @@
+[submodule "libmatrix"]
+	path = libmatrix
+	url = git@github.com:matrix-worx/libmatrix.git
