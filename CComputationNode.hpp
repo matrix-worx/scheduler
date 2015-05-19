@@ -5,10 +5,11 @@
 
 #include <string>
 #include <list>
+#include <vector>
 #include <boost/thread.hpp>
 #include <boost/thread/future.hpp>
 
-typedef std::list<double> DoubleArray;
+typedef std::vector<double> DoubleArray;
 typedef boost::future<DoubleArray> FutureDoubleArray;
 
 class CComputationNode
@@ -22,7 +23,7 @@ public:
    bool isValid( void ) const;
 
    FutureDoubleArray asyncMultiplyPairs( const DoubleArray& array );
-   void asyncSum( const DoubleArray& array );
+   FutureDoubleArray asyncSum( const DoubleArray& array );
 
 private:
 

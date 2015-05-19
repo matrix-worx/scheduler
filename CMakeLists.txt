@@ -15,7 +15,7 @@ set(Boost_USE_STATIC_RUNTIME    OFF)
 
 find_package(Boost
     REQUIRED
-    COMPONENTS system program_options regex thread json_spirit)
+    COMPONENTS system program_options regex thread)
 
 find_package (Threads REQUIRED)
 
@@ -47,9 +47,13 @@ endif()
 message(STATUS "Build type is: ${CMAKE_BUILD_TYPE}")
 
 add_subdirectory(libmatrix ${CMAKE_BINARY_DIR}/libmatrix/ EXCLUDE_FROM_ALL)
+add_subdirectory(jsoncpp EXCLUDE_FROM_ALL)
 
 include_directories(gsl
                     ${CMAKE_BINARY_DIR}/gsl/)
+
+include_directories(jsoncpp
+                    ${CMAKE_BINARY_DIR}/jsoncpp/include)
 
 include_directories(libmatrix
                     ${CMAKE_BINARY_DIR}/libmatrix/)
@@ -62,6 +66,7 @@ add_executable(scheduler
 
 target_link_libraries(scheduler
     matrix
+    jsoncpp_lib_static
     ${Boost_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
 )

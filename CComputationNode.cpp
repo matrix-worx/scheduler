@@ -5,11 +5,14 @@
 #include <utility>
 
 #include <boost/asio.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-#include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/regex.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/lexical_cast.hpp>
+
+#include <jsoncpp/include/json/json.h>
+
+#include <stdexcept>
 
 using boost::asio::ip::tcp;
 
@@ -63,88 +66,110 @@ static DoubleArray asyncRequest( std::string host, std::string uri, DoubleArray 
 
    std::string jsonString = ss.str();
 
-   try
-   {
-      boost::asio::io_service io_service;
+   boost::asio::io_service io_service;
 
-      // Get a list of endpoints corresponding to the server name.
-      tcp::resolver resolver( io_service );
-      tcp::resolver::query query( host, boost::lexical_cast<std::string>(8080) );
-      tcp::resolver::iterator endpoint_iterator = resolver.resolve( query );
+   // Get a list of endpoints corresponding to the server name.
+   tcp::resolver resolver( io_service );
+   tcp::resolver::query query( host, boost::lexical_cast<std::string>(8080) );
+   tcp::resolver::iterator endpoint_iterator = resolver.resolve( query );
 
-      // Try each endpoint until we successfully establish a connection.
-      tcp::socket socket( io_service );
-      boost::asio::connect( socket, endpoint_iterator );
+   // Try each endpoint until we successfully establish a connection.
+   tcp::socket socket( io_service );
+   boost::asio::connect( socket, endpoint_iterator );
 
-      // Form the request. We specify the "Connection: close" header so that the
-      // server will close the socket after transmitting the response. This will
-      // allow us to treat all data up until the EOF as the content.
-      boost::asio::streambuf request;
-      std::ostream request_stream( &request );
-      request_stream << "POST " << uri << " HTTP/1.0\r\n";
-      request_stream << "Host: " << host << "\r\n";
-      request_stream << "Accept: application/json\r\n";
-      request_stream << "Content-Type: application/json\r\n";
-      request_stream << "Content-Length: " << jsonString.size() << "\r\n";
-      request_stream << "Connection: close\r\n\r\n";
-      request_stream << jsonString;
-      // Send the request.
-       boost::asio::write( socket, request );
+   // Form the request. We specify the "Connection: close" header so that the
+   // server will close the socket after transmitting the response. This will
+   // allow us to treat all data up until the EOF as the content.
+   boost::asio::streambuf request;
+   std::ostream request_stream( &request );
+   request_stream << "POST " << uri << " HTTP/1.0\r\n";
+   request_stream << "Host: " << host << "\r\n";
+   request_stream << "Accept: application/json\r\n";
+   request_stream << "Content-Type: application/json\r\n";
+   request_stream << "Content-Length: " << jsonString.size() << "\r\n";
+   request_stream << "Connection: close\r\n\r\n";
+   request_stream << jsonString;
+   // Send the request.
+    boost::asio::write( socket, request );
 
-       // Read the response status line. The response streambuf will automatically
-       // grow to accommodate the entire line. The growth may be limited by passing
-       // a maximum size to the streambuf constructor.
-       boost::asio::streambuf response;
-       boost::asio::read_until( socket, response, "\r\n" );
+    // Read the response status line. The response streambuf will automatically
+    // grow to accommodate the entire line. The growth may be limited by passing
+    // a maximum size to the streambuf constructor.
+    boost::asio::streambuf response;
+    boost::asio::read_until( socket, response, "\r\n" );
 
-       // Check that response is OK.
-       std::istream response_stream( &response );
-       std::string http_version;
-       response_stream >> http_version;
-       unsigned int status_code;
-       response_stream >> status_code;
-       std::string status_message;
-       std::getline( response_stream, status_message );
-       if ( !response_stream || http_version.substr( 0, 5 ) != "HTTP/" )
-       {
-         std::cout << "Invalid response\n";
-         return DoubleArray();
-       }
+    // Check that response is OK.
+    std::istream response_stream( &response );
+    std::string http_version;
+    response_stream >> http_version;
+    unsigned int status_code;
+    response_stream >> status_code;
+    std::string status_message;
+    std::getline( response_stream, status_message );
+    if ( !response_stream || http_version.substr( 0, 5 ) != "HTTP/" )
+    {
+      throw std::runtime_error( "Invalid HTTP response" );
+
+    }
+
+    // Read the response headers, which are terminated by a blank line.
+    boost::asio::read_until( socket, response, "\r\n\r\n" );
+
+    // Read until EOF, writing data to output as we go.
+    boost::system::error_code error;
+    while ( boost::asio::read( socket, response,
+          boost::asio::transfer_at_least( 1 ), error ) );
+
+    std::stringstream dataStream;
+    dataStream << &response;
+
+    std::vector<std::string> strs;
+    boost::algorithm::split_regex( strs, dataStream.str(), boost::regex( "\r\n\r\n" ) );
+
+    DoubleArray resultDoubleArray;
+
+    if ( strs.size() == 2 )
+    {
+
        if ( status_code != 200 )
        {
-         std::cout << "Response returned with status code " << status_code << "\n";
-         return DoubleArray();
+          throw std::runtime_error( "Wrong request: \n" + strs[1] );
        }
 
-       // Read the response headers, which are terminated by a blank line.
-       boost::asio::read_until( socket, response, "\r\n\r\n" );
+       Json::Reader reader;
+       Json::Value resultArray;
+       if ( reader.parse( strs[1], resultArray ) )
+       {
+          if ( resultArray.isArray() )
+          {
+             std::transform( resultArray.begin(),
+                             resultArray.end(),
+                             std::back_inserter( resultDoubleArray ),
+                             boost::bind( &Json::Value::asDouble, _1 ) );
+          }
+       }
+    }
+    else
+    {
+       throw std::runtime_error( "Wrong request: \n" + dataStream.str() );
+    }
 
-       // Read until EOF, writing data to output as we go.
-       boost::system::error_code error;
-       while ( boost::asio::read( socket, response,
-             boost::asio::transfer_at_least( 1 ), error ) );
+    if ( error != boost::asio::error::eof )
+    {
+      throw boost::system::system_error(error);
+    }
 
-       std::cout << &response;
-
-       if (error != boost::asio::error::eof)
-         throw boost::system::system_error(error);
-   }
-   catch (std::exception& e)
-   {
-    std::cout << "Exception: " << e.what() << "\n";
-   }
-   return DoubleArray();
+   return resultDoubleArray;
 }
 
 FutureDoubleArray CComputationNode::asyncMultiplyPairs( const DoubleArray& array )
 {
-
+   return boost::async( boost::launch::async, boost::bind( asyncRequest, mHost, "/multiply", array ) );
 }
 
-void CComputationNode::asyncSum( const DoubleArray& array )
+FutureDoubleArray CComputationNode::asyncSum( const DoubleArray& array )
 {
-   asyncRequest( mHost, "/sum", array );
-   //return boost::async( boost::bind( asyncRequest, mHost, "/sum", array ) );
+   return boost::async( boost::launch::async, boost::bind( asyncRequest, mHost, "/sum", array ) );
 }
 
 

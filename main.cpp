@@ -2,6 +2,8 @@
 #include <string>
 #include <boost/program_options.hpp>
 
+#include <exception>
+
 #include "CComputationNode.hpp"
 
 /**
@@ -56,11 +58,22 @@ int main( int argc, char* argv[] )
 
    CComputationNode node( "127.0.0.1" );
    DoubleArray arr;
-   arr.push_back( 1 );
+   arr.push_back( 1.5 );
    arr.push_back( 2 );
    arr.push_back( 3 );
+   arr.push_back( 3 );
 
-   node.asyncSum( arr );
+   try
+   {
+      FutureDoubleArray futureRes = node.asyncMultiplyPairs( arr );
+      DoubleArray res = futureRes.get();
+
+      std::cout << res[0];
+   }
+   catch( const std::exception& e )
+   {
+      std::cout << e.what();
+   }
 
    return 0;
 }
