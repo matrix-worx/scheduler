@@ -1,3 +1,6 @@
 [submodule "jsoncpp"]
 	path = jsoncpp
 	url = https://github.com/open-source-parsers/jsoncpp.git
+[submodule "libmatrix"]
+	path = libmatrix
+	url = https://github.com/matrix-worx/libmatrix.git
