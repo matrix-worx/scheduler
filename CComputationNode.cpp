@@ -60,7 +60,7 @@ static DoubleArray asyncRequest( std::string host, std::string uri, DoubleArray 
 
    ss << "["
       << join( param |
-                  transformed( static_cast<std::string(*)(double)>(std::to_string) ),
+                  transformed( static_cast<std::string(*)(long double)>(std::to_string) ),
                   ", " )
       << "]";
 
