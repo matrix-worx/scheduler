@@ -162,12 +162,12 @@ static DoubleArray asyncRequest( std::string host, std::string uri, DoubleArray 
    return resultDoubleArray;
 }
 
-FutureDoubleArray CComputationNode::asyncMultiplyPairs( const DoubleArray& array )
+FutureDoubleArray CComputationNode::asyncMultiplyPairs( const DoubleArray& array ) const
 {
    return boost::async( boost::launch::async, boost::bind( asyncRequest, mHost, "/multiply", array ) );
 }
 
-FutureDoubleArray CComputationNode::asyncSum( const DoubleArray& array )
+FutureDoubleArray CComputationNode::asyncSum( const DoubleArray& array ) const
 {
    return boost::async( boost::launch::async, boost::bind( asyncRequest, mHost, "/sum", array ) );
 }

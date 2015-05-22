@@ -10,6 +10,7 @@
 #include <boost/thread/future.hpp>
 
 typedef std::vector<double> DoubleArray;
+
 typedef boost::future<DoubleArray> FutureDoubleArray;
 
 class CComputationNode
@@ -22,12 +23,8 @@ public:
    std::string getName( void ) const;
    bool isValid( void ) const;
 
-   FutureDoubleArray asyncMultiplyPairs( const DoubleArray& array );
-   FutureDoubleArray asyncSum( const DoubleArray& array );
-
-private:
-
-   //DoubleArray asyncRequest( std::string host, std::string uri, DoubleArray param );
+   FutureDoubleArray asyncMultiplyPairs( const DoubleArray& array ) const;
+   FutureDoubleArray asyncSum( const DoubleArray& array ) const;
 
 private:
    std::string mHost;

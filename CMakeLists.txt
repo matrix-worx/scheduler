@@ -6,6 +6,8 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(project_sources
     CComputationNode.hpp
     CComputationNode.cpp
+    CSandBox.hpp
+    CSandBox.cpp
     main.cpp
 )
 
@@ -30,7 +32,7 @@ if(NOT CMAKE_BUILD_TYPE)
   "Choose the type of build: Debug/Release" FORCE)
 endif()
 
-if(NOT WIN32)
+#if(NOT WIN32)
 	include(CheckCXXCompilerFlag)
 
 	if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -50,7 +52,7 @@ if(NOT WIN32)
 	else()
 	  message(FATAL_ERROR "Unsupported compiler")
 	endif()
-endif()
+#endif()
 
 message(STATUS "Build type is: ${CMAKE_BUILD_TYPE}")
 
