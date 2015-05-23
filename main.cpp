@@ -1,3 +1,14 @@
+/*************************************************************************
+ * scheduler
+ *************************************************************************
+ * @file    main.cpp
+ * @date    28.01.15
+ * @author  Hlieb Romanov <rgewebppc@gmail.com>
+ * @brief   Command line toool to perform distributed operations on matrices
+ ************************************************************************/
+/** @addtogroup scheduler Distributed operations scheduler
+ *  @{
+ */
 #include <iostream>
 #include <string>
 #include <exception>
@@ -34,6 +45,9 @@ namespace po = boost::program_options;
 po::options_description optDescr( "Allowed options" );
 po::variables_map options;
 
+/**
+ * @brief Prepare options object
+ */
 void prepareOptionsDescription( void )
 {
     optDescr.add_options()
@@ -46,7 +60,16 @@ void prepareOptionsDescription( void )
         ( "rbin", "consume input in binary format ( by default assume text format)" );
 }
 
-
+/**
+ * @brief Parse command line arguments and fill passed variables
+ * @param[out] matrixAFile - input file path with matrix data
+ * @param[out] matrixBFile - input file path with matrix data
+ * @param[out] matrixCFile - file path where to place result matrix data
+ * @param[out] hostsFile - input file path with compuation nodes host names
+ * @param[out] isTxtOutput - flag that determines whether to write result matrix in text format or not
+ * @param[out] isConsumeBinary - flag that determines whether to read input matrices in binary format or not
+ * @return True - if all required options were set, false - otherwise
+ */
 bool parseCommandLineArguments( std::string& matrixAFile,
                                 std::string& matrixBFile,
                                 std::string& matrixCFile,
@@ -93,17 +116,32 @@ bool parseCommandLineArguments( std::string& matrixAFile,
    return ( ( inputParametersMask & requiredParamsMask ) == requiredParamsMask );
 }
 
+/**
+ * @brief Print help text with program options description
+ */
 void printHelp( void )
 {
     std::cout << optDescr << std::endl;
 }
 
+/**
+ * @brief Helper function to fill computation nodes vector
+ * @param[out] nodes - computation nodes vector to fill
+ * @param jsonValue - json value with computation node host name
+ * @sa main()
+ */
 void populateComputationNodesHelper( std::vector<CComputationNode>& nodes,
                                      Json::Value& jsonValue )
 {
    nodes.push_back( CComputationNode( jsonValue.asString() ) );
 }
 
+/**
+ * @brief The main function
+ * @param argc
+ * @param argv
+ * @return Application exit code
+ */
 int main( int argc, char* argv[] )
 {
    prepareOptionsDescription();
@@ -218,3 +256,4 @@ int main( int argc, char* argv[] )
 
    return 0;
 }
+/** @}*/

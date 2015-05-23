@@ -1,3 +1,6 @@
+/** @addtogroup scheduler Distributed operations scheduler
+ *  @{
+ */
 #include <iostream>
 
 #include "CSandBox.hpp"
@@ -78,12 +81,19 @@ void CSandBox::sandBoxMain( const CMatrix& A,
    array.push_back( A( 3, 0 ) );
 
    FutureDoubleArray result = node.asyncSum( array );
+   try
+   {
+      DoubleArray resultArray = result.get();
 
-   DoubleArray resultArray = result.get();
-
-   std::cout << resultArray.size() << std::endl;
-   std::cout << resultArray[0] << std::endl;
+      std::cout << resultArray.size() << std::endl;
+      std::cout << resultArray[0] << std::endl;
+   }
+   catch( ... )
+   {
+      std::cout << "Something goes wrong here. Exception was thrown." << std::endl;
+   }
 
    terminate( false );
 }
+/** @}*/
 

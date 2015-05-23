@@ -1,3 +1,14 @@
+/*************************************************************************
+ * scheduler
+ *************************************************************************
+ * @file    CComputationNode.cpp
+ * @date    16.05.15
+ * @author  Hlieb Romanov <rgewebppc@gmail.com>
+ * @brief   CComputationNode class definition
+ ************************************************************************/
+/** @addtogroup scheduler Distributed operations scheduler
+ *  @{
+ */
 #include "CComputationNode.hpp"
 
 #include <algorithm>
@@ -16,11 +27,6 @@
 
 using boost::asio::ip::tcp;
 
-/**
- * @brief CComputationNode::CComputationNode
- * MORCHEEBA - Enjoy The Ride
- * KARMON - Take My Hand feat. Terry Shand
- */
 CComputationNode::CComputationNode( void )
    : mHost()
    , mIsValid( false )
@@ -50,6 +56,13 @@ bool CComputationNode::isValid( void ) const
    return mIsValid;
 }
 
+/**
+ * @brief Helper function that performs HTTP request to remote service
+ * @param host - host name
+ * @param uri - URI of remote REST method
+ * @param param - DoubleArray for passing to the remote service
+ * @return Calculation result from remote service
+ */
 static DoubleArray asyncRequest( std::string host, std::string uri, DoubleArray param )
 {
 
@@ -171,6 +184,5 @@ FutureDoubleArray CComputationNode::asyncSum( const DoubleArray& array ) const
 {
    return boost::async( boost::launch::async, boost::bind( asyncRequest, mHost, "/sum", array ) );
 }
-
-
+/** @}*/
 
